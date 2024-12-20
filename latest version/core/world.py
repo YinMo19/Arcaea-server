@@ -784,7 +784,7 @@ class BaseWorldPlay(WorldSkillMixin):
                 # 实在不想拆开了，在这里判断一下，注意这段不会在 BeyondWorldPlay 中执行
                 self.kanae_added_progress = self.user.kanae_stored_prog
 
-            if self.user_play.invasion_flag:  # not None and != 0
+            if self.user_play.invasion_flag == 1 or (self.user_play.invasion_flag == 2 and self.user_play.health <= 0):
                 # 这里硬编码了搭档 id 72
                 self.character_used = UserCharacter(self.c, 72, self.user)
                 self.character_used.select_character_info()
@@ -844,7 +844,6 @@ class WorldPlay(BaseWorldPlay):
 
     def to_dict(self) -> dict:
         r = super().to_dict()
-
 
         # 基础进度加上搭档倍数 不带 character_bonus_progress 但是带 kanae 技能
         r['progress_partial_after_stat'] = self.progress_normalized
