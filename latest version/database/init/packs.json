@@ -916,5 +916,23 @@
 		],
 		"orig_price": 400,
 		"price": 400
+	},
+	{
+		"name": "maimai_append_2",
+		"items": [
+			{
+				"type": "pack",
+				"id": "maimai_append_2",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 4,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 400,
+		"price": 400
 	}
 ]

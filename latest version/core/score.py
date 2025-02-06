@@ -372,6 +372,7 @@ class UserPlay(UserScore):
         if self.user.stamina.stamina < self.user.current_map.stamina_cost * self.stamina_multiply:
             raise StaminaNotEnough('Stamina is not enough.')
 
+        fatalis_stamina_multiply = 1
         self.user.select_user_about_character()
         if not self.user.is_skill_sealed:
             self.user.character.select_character_info()
@@ -383,16 +384,13 @@ class UserPlay(UserScore):
 
             elif self.user.character.skill_id_displayed == 'skill_fatalis':
                 # 特殊判断hikari fatalis的双倍体力消耗
-                self.user.stamina.stamina -= self.user.current_map.stamina_cost * \
-                    self.stamina_multiply * 2
-                self.user.stamina.update()
-                return None
+                fatalis_stamina_multiply = 2
 
         self.clear_play_state()
         self.c.execute('''insert into songplay_token values(:t,:a,:b,:c,'',-1,0,0,:d,:e,:f,:g,:h,:i,:j)''', {
             'a': self.user.user_id, 'b': self.song.song_id, 'c': self.song.difficulty, 'd': self.stamina_multiply, 'e': self.fragment_multiply, 'f': self.prog_boost_multiply, 'g': self.beyond_boost_gauge_usage, 'h': self.skill_cytusii_flag, 'i': self.skill_chinatsu_flag, 'j': self.invasion_flag, 't': self.song_token})
 
-        self.user.stamina.stamina -= self.user.current_map.stamina_cost * self.stamina_multiply
+        self.user.stamina.stamina -= self.user.current_map.stamina_cost * self.stamina_multiply * fatalis_stamina_multiply
         self.user.stamina.update()
 
     def set_play_state_for_course(self, use_course_skip_purchase: bool, course_id: str = None) -> None:

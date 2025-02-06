@@ -5,14 +5,21 @@ from random import randint
 from time import time
 
 from .character import Character, UserCharacter
+from .config_manager import Config
 from .constant import Constant
 from .error import InputError, MapLocked, NoData
 from .item import ItemFactory
+from .sql import UserKVTable
 
 
 class MapParser:
 
     map_id_path: 'dict[str, str]' = {}
+
+    world_info: 'dict[str, dict]' = {}  # 简要记录地图信息
+    chapter_info: 'dict[int, list[str]]' = {}  # 章节包含的地图
+    # 章节包含的地图（不包含可重复地图）
+    chapter_info_without_repeatable: 'dict[int, list[str]]' = {}
 
     def __init__(self) -> None:
         if not self.map_id_path:
@@ -25,10 +32,31 @@ class MapParser:
                     continue
 
                 path = os.path.join(root, file)
-                self.map_id_path[file[:-5]] = path
+                map_id = file[:-5]
+                self.map_id_path[map_id] = path
+
+                map_data = self.get_world_info(map_id)
+                chapter = map_data.get('chapter', None)
+                if chapter is None:
+                    continue
+                self.chapter_info.setdefault(chapter, []).append(map_id)
+                is_repeatable = map_data.get('is_repeatable', False)
+                if not is_repeatable:
+                    self.chapter_info_without_repeatable.setdefault(
+                        chapter, []).append(map_id)
+                self.world_info[map_id] = {
+                    'chapter': chapter,
+                    'is_repeatable': is_repeatable,
+                    'is_beyond': map_data.get('is_beyond', False),
+                    'is_legacy': map_data.get('is_legacy', False),
+                    'step_count': len(map_data.get('steps', [])),
+                }
 
     def re_init(self) -> None:
         self.map_id_path.clear()
+        self.world_info.clear()
+        self.chapter_info.clear()
+        self.chapter_info_without_repeatable.clear()
         self.get_world_info.cache_clear()
         self.parse()
 
@@ -471,6 +499,14 @@ class UserStamina(Stamina):
 
 
 class WorldSkillMixin:
+    '''
+        不可实例化
+
+        self.c = c
+        self.user = user
+        self.user_play = user_play
+    '''
+
     def before_calculate(self) -> None:
         factory_dict = {
             'skill_vita': self._skill_vita,
@@ -480,6 +516,7 @@ class WorldSkillMixin:
             'skill_hikari_vanessa': self._skill_hikari_vanessa,
             'skill_mithra': self._skill_mithra,
             'skill_chinatsu': self._skill_chinatsu,
+            'skill_salt': self._skill_salt,
         }
         if self.user_play.beyond_gauge == 0 and self.character_used.character_id == 35 and self.character_used.skill_id_displayed:
             self._special_tempest()
@@ -670,6 +707,26 @@ class WorldSkillMixin:
             self.character_bonus_progress_normalized = self.progress_normalized
             self.user.current_map.reclimb(self.final_progress)
 
+    def _skill_salt(self) -> None:
+        '''
+        salt 技能，根据单个章节地图的完成情况额外获得最高 10 的世界模式进度
+
+        当前章节完成地图数 / 本章节总地图数（不含无限图）* 10
+        '''
+        if Config.CHARACTER_FULL_UNLOCK:
+            self.character_bonus_progress_normalized = 10
+            return
+
+        kvd = UserKVTable(self.c, self.user.user_id, 'world')
+
+        chapter_id = self.user.current_map.chapter
+        count = kvd['chapter_complete_count', chapter_id] or 0
+        total = len(MapParser.chapter_info_without_repeatable[chapter_id])
+        if count > total:
+            count = total
+
+        self.character_bonus_progress_normalized = 10 * (count / total)
+
 
 class BaseWorldPlay(WorldSkillMixin):
     '''
@@ -821,6 +878,9 @@ class BaseWorldPlay(WorldSkillMixin):
             self.user.current_map.curr_position = 0
 
         self.user.current_map.update()
+
+        # 更新用户完成情况
+        self.user.update_user_world_complete_info()
 
     def update(self) -> None:
         '''世界模式更新'''
