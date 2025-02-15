@@ -171,9 +171,9 @@ class SaveUpdateScore(BaseOperation):
             song_id = list(set(song_id_1 + song_id_2))
 
             c.execute(
-                f'''select song_id, rating_pst, rating_prs, rating_ftr, rating_byn from chart where song_id in ({','.join(['?']*len(song_id))})''', song_id)
+                f'''select song_id, rating_pst, rating_prs, rating_ftr, rating_byn, rating_etr from chart where song_id in ({','.join(['?']*len(song_id))})''', song_id)
             x = c.fetchall()
-            song_chart_const = {i[0]: [i[1], i[2], i[3], i[4]]
+            song_chart_const = {i[0]: [i[1], i[2], i[3], i[4], i[5]]
                                 for i in x}  # chart const * 10
 
             new_scores = []
@@ -204,8 +204,8 @@ class SaveUpdateScore(BaseOperation):
     def _all_update(self):
         with Connect() as c:
             c.execute(
-                '''select song_id, rating_pst, rating_prs, rating_ftr, rating_byn from chart''')
-            song_chart_const = {i[0]: [i[1], i[2], i[3], i[4]]
+                '''select song_id, rating_pst, rating_prs, rating_ftr, rating_byn, rating_etr from chart''')
+            song_chart_const = {i[0]: [i[1], i[2], i[3], i[4], i[5]]
                                 for i in c.fetchall()}  # chart const * 10
             c.execute('''select user_id from user_save''')
             for y in c.fetchall():
