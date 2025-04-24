@@ -2044,5 +2044,23 @@
 		],
 		"orig_price": 100,
 		"price": 100
+	},
+	{
+		"name": "dullblade",
+		"items": [
+			{
+				"type": "single",
+				"id": "dullblade",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 1,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 100,
+		"price": 100
 	}
 ]
