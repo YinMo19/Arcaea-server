@@ -328,6 +328,8 @@ class UserInfo(User):
 
         self.insight_state: int = None
 
+        self.custom_banner = None
+
         self.__cores: list = None
         self.__packs: list = None
         self.__singles: list = None
@@ -553,6 +555,7 @@ class UserInfo(User):
             'pick_ticket': self.pick_ticket,
 
             # 'custom_banner': 'online_banner_2024_06',
+            'custom_banner': self.custom_banner,
             # 'subscription_multiplier': 114,
             # 'memory_boost_ticket': 5,
             'insight_state': self.insight_state,  # 0~2 不可选，3 技能激活，4 未激活，5 激活可选，6 未激活可选
@@ -601,6 +604,8 @@ class UserInfo(User):
         self.mp_notification_enabled = x[37] == 1
 
         self.insight_state = x[38]
+
+        self.custom_banner = x[39] if x[39] is not None else ''
 
         return self
 
