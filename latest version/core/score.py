@@ -246,6 +246,7 @@ class UserPlay(UserScore):
 
         self.combo_interval_bonus: int = None  # 不能给 None 以外的默认值
         self.hp_interval_bonus: int = None  # 不能给 None 以外的默认值
+        self.fever_bonus: int = None  # 不能给 None 以外的默认值
         self.skill_cytusii_flag: str = None
         self.skill_chinatsu_flag: str = None
         self.highest_health: int = None
@@ -294,6 +295,10 @@ class UserPlay(UserScore):
             x = x + str(self.combo_interval_bonus)
 
         if self.hp_interval_bonus is not None and self.hp_interval_bonus < 0:
+            return False
+
+        if self.fever_bonus is not None and (self.fever_bonus < 0 or self.fever_bonus > self.perfect_count * 5):
+            # fever 等级最高为 5
             return False
 
         y = f'{self.user.user_id}{self.song_hash}'
@@ -390,7 +395,8 @@ class UserPlay(UserScore):
         self.c.execute('''insert into songplay_token values(:t,:a,:b,:c,'',-1,0,0,:d,:e,:f,:g,:h,:i,:j)''', {
             'a': self.user.user_id, 'b': self.song.song_id, 'c': self.song.difficulty, 'd': self.stamina_multiply, 'e': self.fragment_multiply, 'f': self.prog_boost_multiply, 'g': self.beyond_boost_gauge_usage, 'h': self.skill_cytusii_flag, 'i': self.skill_chinatsu_flag, 'j': self.invasion_flag, 't': self.song_token})
 
-        self.user.stamina.stamina -= self.user.current_map.stamina_cost * self.stamina_multiply * fatalis_stamina_multiply
+        self.user.stamina.stamina -= self.user.current_map.stamina_cost * \
+            self.stamina_multiply * fatalis_stamina_multiply
         self.user.stamina.update()
 
     def set_play_state_for_course(self, use_course_skip_purchase: bool, course_id: str = None) -> None:

@@ -518,6 +518,7 @@ class WorldSkillMixin:
             'skill_chinatsu': self._skill_chinatsu,
             'skill_salt': self._skill_salt,
             'skill_hikari_selene': self._skill_hikari_selene,
+            'skill_nami_sui': self._skill_nami_sui,
         }
         if self.user_play.beyond_gauge == 0 and self.character_used.character_id == 35 and self.character_used.skill_id_displayed:
             self._special_tempest()
@@ -739,6 +740,15 @@ class WorldSkillMixin:
         if 0 < self.user_play.health <= 100:
             self.over_skill_increase = int(self.user_play.health / 10) * 2
             self.prog_skill_increase = int(self.user_play.health / 10) * 2
+
+    def _skill_nami_sui(self) -> None:
+        '''
+        nami & sui 技能，根据纯粹音符数与 FEVER 等级提高世界模式进度
+        '''
+        if self.user_play.fever_bonus is None:
+            return
+
+        self.character_bonus_progress_normalized = self.user_play.fever_bonus / 1000
 
 
 class BaseWorldPlay(WorldSkillMixin):
