@@ -91,73 +91,24 @@ It is just so interesting. What it can do is under exploration.
 
 ### Version 2.12.0
 
-> v2.11.3.1 ~ v2.11.3.20 for Arcaea 5.2.0 ~ 5.10.4
+> v2.12.0.1 ~ v2.12.0.10 for Arcaea 5.10.6 ~ 6.7.1
 >
-> Here are not some bug fixes.
->
-> 注意：Link Play 2.0 无法兼容旧版本客户端。  Note: Link Play 2.0 is not compatible with older client versions.
+> Here are not all bug fixes and features.
 
-- 适用于 Arcaea 5.10.4 版本
-  For Arcaea 5.10.4
+- 适用于 Arcaea 6.7.1 版本
+  For Arcaea 6.7.1
 - 添加一些新搭档和搭档的觉醒形态，并支持他们的技能
   Add some new partners, uncap some others, and add support for their skills.
-- 支持 Link Play 2.0 的几乎所有功能
-  Add almost whole support for Link Play 2.0.
-- 支持新谱面难度 ETR
-  Adapt to the new difficulty ETR.
-- 支持内容捆绑包（热更新），包含两种更新模式
-  Add support for content bundles (hot update), including two update modes.
-- 支持新手任务系统
-  Add support for missions.
-- 更新 Recent 30 机制，修改其表结构
-  Update Recent 30 mechanism. Alter Recent 30 table structure.
-- PTT 机制更新：添加了推分保护
-  PTT mechanism: Change first play protection to new best protection.
-- 调整世界排名机制使其更接近于官服
-  Adjust world rank mechanism to be closer to the official one.
-- 重构世界模式，并调整了一些搭档的技能效果和进度计算逻辑
-  Code refactor for World Mode, and adjust some skills and the logic of progress calculation.
-- 支持世界模式的陷落梯子
-  Add support for Breached World Map.
-- 添加了一个陷落梯子例子（#148）
-  Add an example breached map. (#148)
-- 变更残片购买体力的恢复时间为 23 小时
-  Change the recover time of using fragments buying stamina to 23 hours.
-- 支持设置多个可使用的和旧的游戏 API 前缀，其中旧的前缀会通知用户更新客户端
-  Add some endpoints for old API prefixes to notify users to update the client; add support for multiple game prefixes.
-- 支持用户自销毁账号（默认不开启）
-  Add support for users destroy their own accounts. (default unable)
-- 添加对“单曲兑换券”的不完整支持
-  Incomplete support for "pick_ticket".
-- 世界模式地图文件夹中可以包含子文件夹了
-  Make the world maps' folder can have sub folders.
-- 支持后台和 API 刷新 Recent 30 的定数评分
-  Add support for refreshing ratings of Recent 30 via API and webpage.
-- 添加对 IP 及设备的用户注册频率限制
-  Add the IP and the device rate limiters for user register.
-- 修复当用户再次通过已经通过的段位时无法正常上传分数的问题（by Guzi422）
-  Fix the bug that the player cannot upload the score when completing a course again. (by Guzi422)
-- 修复段位模式最高分在用户未完整完成挑战时不更新的逻辑问题
-  Fix a logical bug that the course's high score will not update if the user does not complete the whole course challenge.
-- 修复 Link Play 相关 API 接口报错的问题
-  Fix a bug that API for Link Play cannot work.
-- 修复依赖问题：cryptography >= 35.0.0
-  Fix requirements: cryptography >= 35.0.0
-- 修复 `songlist` 解析问题（#156）
-  Fix a `songlist` parser problem. (#156)
-- 修复技能 skill_amane 在世界地图台阶类型为空时报错的问题
-  Fix a bug that "skill_amane" may arise error when the step type of world map is null.
-- 支持自动添加搭档“光 & 对立 (Reunion)”和“光 (Fatalis)”，以尝试解决最终章的解锁问题（#110 #164）
-  Add support for automatically adding partner "Hikari & Tairitsu (Reunion)" and "Hikari (Fatalis)", to try to unlock Finale stories correctly. (#110 #164)
-- 修复 `songlist` 文件存在时视频文件无法下载的问题（#177）
-  Fix a bug that the video files cannot be downloaded when
-the `songlist` file exists. (#177)
-- 修复 Link Play 中玩家全部返回房间后上一首曲子成绩消失的问题
-  Fix a bug that the last song's scores will disappear when all players return to room in Link Play.
-- 工具 `update_song.py` 支持 ETR 难度
-  Add support for ETR difficulties in the `update_song.py` tool.
-- 添加发送错误信息的小工具测试服务端
-  Add a small tool test server to send error message.
+- 支持“光 (Fatalis)”的由世界模式总台阶数决定的动态搭档数值
+  Add support for dynamic values of "Hikari (Fatalis)", which is depended by world mode total steps.
+- 支持新版本客户端的账户注册和登录接口
+  Adapt to new account registration and login endpoints of the new version client.
+- 修复 Link Play 房间中玩家历史分数异常的问题
+  Fix a bug that if players do not start the first play in one room, their scores will be wrong.
+- 修复因为歌曲 idx 数值过大导致服务端错误，致使 Link Play 模块无法工作的问题
+  Fix a bug that if song's idx is too big, the server will catch the error, which makes Link Play cannot work.
+- 修复谱面难度 ETR 相关问题
+  Fix some bugs about the ETR difficulty.
 
 ## 运行环境与依赖 Running environment and requirements
 
