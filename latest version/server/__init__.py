@@ -23,7 +23,7 @@ def get_bps():
         return s
 
     bp = Blueprint('server', __name__)
-    list(map(bp.register_blueprint, [user.bp, auth.bp, friend.bp, score.bp,
+    list(map(bp.register_blueprint, [user.bp2, user.bp, auth.bp, friend.bp, score.bp,
                                      world.bp, purchase.bp, present.bp, others.bp, multiplayer.bp, course.bp, mission.bp]))
 
     bps = [Blueprint(x, __name__, url_prefix=x)

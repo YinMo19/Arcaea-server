@@ -1,5 +1,6 @@
 from base64 import b64encode
 from os import urandom
+from random import choices
 from time import time
 
 from .bgtask import BGTask, logdb_execute
@@ -244,9 +245,14 @@ class UserPlay(UserScore):
         self.course_play: 'CoursePlay' = None
 
         self.combo_interval_bonus: int = None  # 不能给 None 以外的默认值
+        self.hp_interval_bonus: int = None  # 不能给 None 以外的默认值
+        self.fever_bonus: int = None  # 不能给 None 以外的默认值
         self.skill_cytusii_flag: str = None
+        self.skill_chinatsu_flag: str = None
         self.highest_health: int = None
         self.lowest_health: int = None
+
+        self.invasion_flag: int = None  # 1: invasion_start, 2: invasion_hard
 
     def to_dict(self) -> dict:
         # 不能super
@@ -288,6 +294,13 @@ class UserPlay(UserScore):
                 return False
             x = x + str(self.combo_interval_bonus)
 
+        if self.hp_interval_bonus is not None and self.hp_interval_bonus < 0:
+            return False
+
+        if self.fever_bonus is not None and (self.fever_bonus < 0 or self.fever_bonus > self.perfect_count * 5):
+            # fever 等级最高为 5
+            return False
+
         y = f'{self.user.user_id}{self.song_hash}'
         checksum = md5(x+md5(y))
 
@@ -326,16 +339,27 @@ class UserPlay(UserScore):
             self.prog_boost_multiply = int(x[10])
             self.beyond_boost_gauge_usage = int(x[11])
             self.skill_cytusii_flag = x[12]
+            self.skill_chinatsu_flag = x[13]
+            self.invasion_flag = x[14]
             self.is_world_mode = True
             self.course_play_state = -1
 
-    def set_play_state_for_world(self, stamina_multiply: int = 1, fragment_multiply: int = 100, prog_boost_multiply: int = 0, beyond_boost_gauge_usage: int = 0, skill_cytusii_flag: str = None) -> None:
+    def set_play_state_for_world(
+        self,
+        stamina_multiply: int = 1,
+        fragment_multiply: int = 100,
+        prog_boost_multiply: int = 0,
+        beyond_boost_gauge_usage: int = 0,
+        skill_cytusii_flag: str = None,
+        skill_chinatsu_flag: str = None
+    ) -> None:
         self.song_token = b64encode(urandom(64)).decode()
         self.stamina_multiply = int(stamina_multiply)
         self.fragment_multiply = int(fragment_multiply)
         self.prog_boost_multiply = int(prog_boost_multiply)
         self.beyond_boost_gauge_usage = int(beyond_boost_gauge_usage)
         self.skill_cytusii_flag = skill_cytusii_flag
+        self.skill_chinatsu_flag = skill_chinatsu_flag
         if self.prog_boost_multiply != 0 or self.beyond_boost_gauge_usage != 0:
             self.c.execute('''select prog_boost, beyond_boost_gauge from user where user_id=:a''', {
                            'a': self.user.user_id})
@@ -346,10 +370,6 @@ class UserPlay(UserScore):
                     # 注意：偷懒了，没判断是否是beyond图
                     self.beyond_boost_gauge_usage = 0
 
-        self.clear_play_state()
-        self.c.execute('''insert into songplay_token values(:t,:a,:b,:c,'',-1,0,0,:d,:e,:f,:g,:h)''', {
-            'a': self.user.user_id, 'b': self.song.song_id, 'c': self.song.difficulty, 'd': self.stamina_multiply, 'e': self.fragment_multiply, 'f': self.prog_boost_multiply, 'g': self.beyond_boost_gauge_usage, 'h': self.skill_cytusii_flag, 't': self.song_token})
-
         self.user.select_user_about_current_map()
         self.user.current_map.select_map_info()
 
@@ -357,17 +377,26 @@ class UserPlay(UserScore):
         if self.user.stamina.stamina < self.user.current_map.stamina_cost * self.stamina_multiply:
             raise StaminaNotEnough('Stamina is not enough.')
 
+        fatalis_stamina_multiply = 1
         self.user.select_user_about_character()
         if not self.user.is_skill_sealed:
             self.user.character.select_character_info()
-            if self.user.character.skill_id_displayed == 'skill_fatalis':
-                # 特殊判断hikari fatalis的双倍体力消耗
-                self.user.stamina.stamina -= self.user.current_map.stamina_cost * \
-                    self.stamina_multiply * 2
-                self.user.stamina.update()
-                return None
+            # invasion 扔骰子
+            _flag = choices([0, 1, 2], [
+                            max(1 - Constant.INVASION_START_WEIGHT - Constant.INVASION_HARD_WEIGHT, 0), Constant.INVASION_START_WEIGHT, Constant.INVASION_HARD_WEIGHT])[0]
+            if self.user.is_insight_enabled and _flag != 0:
+                self.invasion_flag = _flag
 
-        self.user.stamina.stamina -= self.user.current_map.stamina_cost * self.stamina_multiply
+            elif self.user.character.skill_id_displayed == 'skill_fatalis':
+                # 特殊判断hikari fatalis的双倍体力消耗
+                fatalis_stamina_multiply = 2
+
+        self.clear_play_state()
+        self.c.execute('''insert into songplay_token values(:t,:a,:b,:c,'',-1,0,0,:d,:e,:f,:g,:h,:i,:j)''', {
+            'a': self.user.user_id, 'b': self.song.song_id, 'c': self.song.difficulty, 'd': self.stamina_multiply, 'e': self.fragment_multiply, 'f': self.prog_boost_multiply, 'g': self.beyond_boost_gauge_usage, 'h': self.skill_cytusii_flag, 'i': self.skill_chinatsu_flag, 'j': self.invasion_flag, 't': self.song_token})
+
+        self.user.stamina.stamina -= self.user.current_map.stamina_cost * \
+            self.stamina_multiply * fatalis_stamina_multiply
         self.user.stamina.update()
 
     def set_play_state_for_course(self, use_course_skip_purchase: bool, course_id: str = None) -> None:
@@ -380,8 +409,8 @@ class UserPlay(UserScore):
         self.course_play.score = 0
         self.course_play.clear_type = 3  # 设置为PM，即最大值
 
-        self.c.execute('''insert into songplay_token values(?,?,?,?,?,?,?,?,1,100,0,0,"")''', (self.song_token, self.user.user_id, self.song.song_id,
-                                                                                               self.song.difficulty, self.course_play.course_id, self.course_play_state, self.course_play.score, self.course_play.clear_type))
+        self.c.execute('''insert into songplay_token values(?,?,?,?,?,?,?,?,1,100,0,0,"","",0)''', (self.song_token, self.user.user_id, self.song.song_id,
+                                                                                                    self.song.difficulty, self.course_play.course_id, self.course_play_state, self.course_play.score, self.course_play.clear_type))
         self.user.select_user_about_stamina()
         if use_course_skip_purchase:
             x = ItemCore(self.c)

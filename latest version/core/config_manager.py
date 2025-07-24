@@ -12,7 +12,7 @@ class Config:
 
     SONG_FILE_HASH_PRE_CALCULATE = True
 
-    GAME_API_PREFIX = '/autumnequinox/33'  # str | list[str]
+    GAME_API_PREFIX = ['/coldwind/35', '/']  # str | list[str]
     OLD_GAME_API_PREFIX = []  # str | list[str]
 
     ALLOW_APPVERSION = []  # list[str]
@@ -86,6 +86,9 @@ class Config:
     BEST30_WEIGHT = 1 / 40
     RECENT10_WEIGHT = 1 / 40
 
+    INVASION_START_WEIGHT = 0.1
+    INVASION_HARD_WEIGHT = 0.1
+
     MAX_FRIEND_COUNT = 50
 
     WORLD_MAP_FOLDER_PATH = './database/map/'
@@ -103,9 +106,7 @@ class Config:
     GAME_REGISTER_IP_RATE_LIMIT = '10/1 day'
     GAME_REGISTER_DEVICE_RATE_LIMIT = '3/1 day'
 
-
     NOTIFICATION_EXPIRE_TIME = 3 * 60 * 1000
-    
 
 
 class ConfigManager:

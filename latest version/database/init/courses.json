@@ -445,5 +445,50 @@
             "core_generic_20",
             "course_banner_11"
         ]
+    },
+    {
+        "course_id": "6.0-dan-12",
+        "style": 12,
+        "songs": [
+            {
+                "flag_as_hidden": true,
+                "difficulty": 2,
+                "id": "abstrusedilemma"
+            },
+            {
+                "flag_as_hidden": true,
+                "difficulty": 3,
+                "id": "worldender"
+            },
+            {
+                "flag_as_hidden": true,
+                "difficulty": 4,
+                "id": "alterego"
+            },
+            {
+                "flag_as_hidden": true,
+                "difficulty": 3,
+                "id": "designant"
+            }
+        ],
+        "gauge_requirement": "default",
+        "requirements": [
+            {
+                "value": "4.0-dan-11",
+                "type": "course"
+            }
+        ],
+        "flag_as_hidden_when_requirements_not_met": true,
+        "dan_name": "Phase 12",
+        "course_name": "侵蚀万物的色彩",
+        "can_start": true,
+        "is_completed": false,
+        "high_score": 0,
+        "best_clear_type": -1,
+        "rewards": [
+            "fragment2000",
+            "core_generic_20",
+            "course_banner_12"
+        ]
     }
 ]

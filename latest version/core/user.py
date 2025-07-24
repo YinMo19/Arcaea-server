@@ -13,8 +13,8 @@ from .item import UserItemList
 from .limiter import ArcLimiter
 from .mission import UserMissionList
 from .score import Score
-from .sql import Query, Sql
-from .world import Map, UserMap, UserStamina
+from .sql import Query, Sql, UserKVTable
+from .world import Map, MapParser, UserMap, UserStamina
 
 
 def code_get_id(c, user_code: str) -> int:
@@ -326,6 +326,10 @@ class UserInfo(User):
         self.current_map: 'Map' = None
         self.stamina: 'UserStamina' = None
 
+        self.insight_state: int = None
+
+        self.custom_banner = None
+
         self.__cores: list = None
         self.__packs: list = None
         self.__singles: list = None
@@ -335,6 +339,12 @@ class UserInfo(User):
         self.__world_songs: list = None
         self.curr_available_maps: list = None
         self.__course_banners: list = None
+
+    @property
+    def is_insight_enabled(self) -> bool:
+        if self.insight_state is None:
+            self.select_user_one_column('insight_state', 4, int)
+        return self.insight_state == 3 or self.insight_state == 5
 
     @property
     def cores(self) -> list:
@@ -545,8 +555,17 @@ class UserInfo(User):
             'pick_ticket': self.pick_ticket,
 
             # 'custom_banner': 'online_banner_2024_06',
+            'custom_banner': self.custom_banner,
             # 'subscription_multiplier': 114,
             # 'memory_boost_ticket': 5,
+            'insight_state': self.insight_state,  # 0~2 不可选，3 技能激活，4 未激活，5 激活可选，6 未激活可选
+
+            # 'enabled_features': [
+            #     {
+            #         "metadata": ["USA"],
+            #         "feature": "paymentlink"
+            #     }
+            # ],
         }
 
     def from_list(self, x: list) -> 'UserInfo':
@@ -590,6 +609,10 @@ class UserInfo(User):
         self.kanae_stored_prog = x[36] if x[36] else 0
 
         self.mp_notification_enabled = x[37] == 1
+
+        self.insight_state = x[38]
+
+        self.custom_banner = x[39] if x[39] is not None else ''
 
         return self
 
@@ -719,6 +742,35 @@ class UserInfo(User):
             '''update user set world_rank_score = ? where user_id = ?''', (x[0], self.user_id))
         self.world_rank_score = x[0]
 
+    def update_user_world_complete_info(self) -> None:
+        '''
+            更新用户的世界模式完成信息，包括两个部分
+
+            1. 每个章节的完成地图数量，为了 salt 技能
+            2. 全世界模式完成台阶数之和，为了 fatalis 技能
+        '''
+        kvd = UserKVTable(self.c, self.user_id, 'world')
+
+        for chapter_id, map_ids in MapParser.chapter_info_without_repeatable.items():
+            self.c.execute(
+                f'''select map_id, curr_position from user_world where user_id = ? and map_id in ({','.join(['?']*len(map_ids))})''',
+                (self.user_id, *map_ids)
+            )
+            x = self.c.fetchall()
+            n = 0
+            for map_id, curr_position in x:
+                step_count = MapParser.world_info[map_id]['step_count']
+                if curr_position == step_count - 1:
+                    n += 1
+            kvd['chapter_complete_count', chapter_id] = n
+
+        self.c.execute(
+            '''select sum(curr_position) + count(*) from user_world where user_id = ?''', (self.user_id,)
+        )
+        x = self.c.fetchone()
+        if x is not None:
+            kvd['total_step_count'] = x[0] or 0
+
     def select_user_one_column(self, column_name: str, default_value=None, data_type=None) -> None:
         '''
             查询user表的某个属性
@@ -794,6 +846,19 @@ class UserOnline(UserInfo):
         self.favorite_character = UserCharacter(self.c, character_id, self)
         self.c.execute('''update user set favorite_character = :a where user_id = :b''',
                        {'a': self.favorite_character.character_id, 'b': self.user_id})
+
+    def toggle_invasion(self) -> None:
+        self.c.execute(
+            '''select insight_state from user where user_id = ?''', (self.user_id,))
+        x = self.c.fetchone()
+        if not x:
+            raise NoData('No user.', 108, -3)
+        self.insight_state = x[0]
+        rq = Constant.INSIGHT_TOGGLE_STATES
+        self.insight_state = rq[(rq.index(self.insight_state) + 1) % len(rq)]
+
+        self.c.execute(
+            '''update user set insight_state = ? where user_id = ?''', (self.insight_state, self.user_id))
 
 
 class UserChanger(UserInfo, UserRegister):

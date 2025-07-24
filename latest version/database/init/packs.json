@@ -862,5 +862,149 @@
 		],
 		"orig_price": 500,
 		"price": 500
+	},
+	{
+		"name": "ongeki_append_2",
+		"items": [
+			{
+				"type": "pack",
+				"id": "ongeki_append_2",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 4,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 400,
+		"price": 400
+	},
+	{
+		"name": "lephon",
+		"items": [
+			{
+				"type": "pack",
+				"id": "lephon",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 5,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 500,
+		"price": 500
+	},
+	{
+		"name": "chunithm_append_3",
+		"items": [
+			{
+				"type": "pack",
+				"id": "chunithm_append_3",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 4,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 400,
+		"price": 400
+	},
+	{
+		"name": "maimai_append_2",
+		"items": [
+			{
+				"type": "pack",
+				"id": "maimai_append_2",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 4,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 400,
+		"price": 400
+	},
+	{
+		"name": "undertale",
+		"items": [
+			{
+				"type": "pack",
+				"id": "undertale",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 5,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 500,
+		"price": 500
+	},
+	{
+		"name": "djmax",
+		"items": [
+			{
+				"type": "pack",
+				"id": "djmax",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 5,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 500,
+		"price": 500
+	},
+	{
+		"name": "djmax_append_1",
+		"items": [
+			{
+				"type": "pack",
+				"id": "djmax_append_1",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 5,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 500,
+		"price": 500
+	},
+	{
+		"name": "anima",
+		"items": [
+			{
+				"id": "anima",
+				"type": "pack",
+				"is_available": true
+			},
+			{
+				"id": "core_generic",
+				"type": "core",
+				"amount": 5,
+				"is_available": true
+			}
+		],
+		"orig_price": 500,
+		"price": 500
 	}
 ]

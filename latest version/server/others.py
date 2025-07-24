@@ -6,7 +6,7 @@ from werkzeug.datastructures import ImmutableMultiDict
 
 from core.bundle import BundleDownload
 from core.download import DownloadList
-from core.error import RateLimit
+from core.error import RateLimit, ArcError
 from core.item import ItemCharacter
 from core.notification import NotificationFactory
 from core.sql import Connect
@@ -99,6 +99,28 @@ def finale_end(user_id):
         item.set_id('5')  # Hikari & Tairitsu (Reunion)
         item.user_claim_item(UserOnline(c, user_id))
         return success_return({})
+
+
+@bp.route('/insight/me/complete/<string:pack_id>', methods=['POST'])
+@auth_required(request)
+@arc_try
+def insight_complete(user_id, pack_id):
+    # insight state change
+    with Connect() as c:
+        u = UserOnline(c, user_id)
+        if pack_id == 'eden_append_1':
+            item = ItemCharacter(c)
+            item.set_id('72')  # Insight (Ascendant - 8th Seeker)
+            item.user_claim_item(u)
+            u.update_user_one_column('insight_state', 1)
+        elif pack_id == 'lephon':
+            u.update_user_one_column('insight_state', 3)
+        else:
+            raise ArcError('Invalid pack_id', 151, status=404)
+
+        return success_return({
+            'insight_state': u.insight_state
+        })
 
 
 @bp.route('/applog/me/log', methods=['POST'])

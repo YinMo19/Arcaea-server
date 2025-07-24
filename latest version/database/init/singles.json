@@ -1918,5 +1918,203 @@
 		],
 		"orig_price": 100,
 		"price": 100
+	},
+	{
+		"name": "thirdsun",
+		"items": [
+			{
+				"type": "single",
+				"id": "thirdsun",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 1,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 100,
+		"price": 100
+	},
+	{
+		"name": "crimsonquartz",
+		"items": [
+			{
+				"type": "single",
+				"id": "crimsonquartz",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 1,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 100,
+		"price": 100
+	},
+	{
+		"name": "diesirae",
+		"items": [
+			{
+				"type": "single",
+				"id": "diesirae",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 1,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 100,
+		"price": 100
+	},
+	{
+		"name": "spiritdauntless",
+		"items": [
+			{
+				"type": "single",
+				"id": "spiritdauntless",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 1,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 100,
+		"price": 100
+	},
+	{
+		"name": "placebobattler",
+		"items": [
+			{
+				"type": "single",
+				"id": "placebobattler",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 1,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 100,
+		"price": 100
+	},
+	{
+		"name": "megalovaniarmx",
+		"items": [
+			{
+				"type": "single",
+				"id": "megalovaniarmx",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 1,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 100,
+		"price": 100
+	},
+	{
+		"name": "shinchoku",
+		"items": [
+			{
+				"type": "single",
+				"id": "shinchoku",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 1,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 100,
+		"price": 100
+	},
+	{
+		"name": "dullblade",
+		"items": [
+			{
+				"type": "single",
+				"id": "dullblade",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 1,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 100,
+		"price": 100
+	},
+	{
+		"name": "tictactoe",
+		"items": [
+			{
+				"type": "single",
+				"id": "tictactoe",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 1,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 100,
+		"price": 100
+	},
+	{
+		"name": "dontdie",
+		"items": [
+			{
+				"type": "single",
+				"id": "dontdie",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 1,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 100,
+		"price": 100
+	},
+	{
+		"name": "miles",
+		"items": [
+			{
+				"type": "single",
+				"id": "miles",
+				"is_available": true
+			},
+			{
+				"type": "core",
+				"amount": 1,
+				"id": "core_generic",
+				"is_available": true
+			}
+		],
+		"orig_price": 100,
+		"price": 100
 	}
 ]

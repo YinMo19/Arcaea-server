@@ -4,15 +4,22 @@ from json import load
 from random import randint
 from time import time
 
-from .character import Character
+from .character import Character, UserCharacter
+from .config_manager import Config
 from .constant import Constant
 from .error import InputError, MapLocked, NoData
 from .item import ItemFactory
+from .sql import UserKVTable
 
 
 class MapParser:
 
     map_id_path: 'dict[str, str]' = {}
+
+    world_info: 'dict[str, dict]' = {}  # 简要记录地图信息
+    chapter_info: 'dict[int, list[str]]' = {}  # 章节包含的地图
+    # 章节包含的地图（不包含可重复地图）
+    chapter_info_without_repeatable: 'dict[int, list[str]]' = {}
 
     def __init__(self) -> None:
         if not self.map_id_path:
@@ -25,10 +32,31 @@ class MapParser:
                     continue
 
                 path = os.path.join(root, file)
-                self.map_id_path[file[:-5]] = path
+                map_id = file[:-5]
+                self.map_id_path[map_id] = path
+
+                map_data = self.get_world_info(map_id)
+                chapter = map_data.get('chapter', None)
+                if chapter is None:
+                    continue
+                self.chapter_info.setdefault(chapter, []).append(map_id)
+                is_repeatable = map_data.get('is_repeatable', False)
+                if not is_repeatable:
+                    self.chapter_info_without_repeatable.setdefault(
+                        chapter, []).append(map_id)
+                self.world_info[map_id] = {
+                    'chapter': chapter,
+                    'is_repeatable': is_repeatable,
+                    'is_beyond': map_data.get('is_beyond', False),
+                    'is_legacy': map_data.get('is_legacy', False),
+                    'step_count': len(map_data.get('steps', [])),
+                }
 
     def re_init(self) -> None:
         self.map_id_path.clear()
+        self.world_info.clear()
+        self.chapter_info.clear()
+        self.chapter_info_without_repeatable.clear()
         self.get_world_info.cache_clear()
         self.parse()
 
@@ -133,6 +161,7 @@ class Map:
         self.chain_info: dict = None
 
         # self.requires: list[dict] = None
+        self.requires_any: 'list[dict]' = None
 
         self.disable_over: bool = None
         self.new_law: str = None
@@ -188,6 +217,8 @@ class Map:
             r['disable_over'] = self.disable_over
         if self.new_law is not None and self.new_law != '':
             r['new_law'] = self.new_law
+        if self.requires_any:
+            r['requires_any'] = self.requires_any
         return r
 
     def from_dict(self, raw_dict: dict) -> 'Map':
@@ -216,6 +247,7 @@ class Map:
 
         self.disable_over = raw_dict.get('disable_over')
         self.new_law = raw_dict.get('new_law')
+        self.requires_any = raw_dict.get('requires_any')
         return self
 
     def select_map_info(self):
@@ -467,6 +499,14 @@ class UserStamina(Stamina):
 
 
 class WorldSkillMixin:
+    '''
+        不可实例化
+
+        self.c = c
+        self.user = user
+        self.user_play = user_play
+    '''
+
     def before_calculate(self) -> None:
         factory_dict = {
             'skill_vita': self._skill_vita,
@@ -474,7 +514,11 @@ class WorldSkillMixin:
             'skill_ilith_ivy': self._skill_ilith_ivy,
             'ilith_awakened_skill': self._ilith_awakened_skill,
             'skill_hikari_vanessa': self._skill_hikari_vanessa,
-            'skill_mithra': self._skill_mithra
+            'skill_mithra': self._skill_mithra,
+            'skill_chinatsu': self._skill_chinatsu,
+            'skill_salt': self._skill_salt,
+            'skill_hikari_selene': self._skill_hikari_selene,
+            'skill_nami_sui': self._skill_nami_sui,
         }
         if self.user_play.beyond_gauge == 0 and self.character_used.character_id == 35 and self.character_used.skill_id_displayed:
             self._special_tempest()
@@ -492,6 +536,7 @@ class WorldSkillMixin:
             'luna_uncap': self._luna_uncap,
             'skill_kanae_uncap': self._skill_kanae_uncap,
             'skill_eto_hoppe': self._skill_eto_hoppe,
+            'skill_intruder': self._skill_intruder,
         }
         if self.character_used.skill_id_displayed in factory_dict:
             factory_dict[self.character_used.skill_id_displayed]()
@@ -630,9 +675,11 @@ class WorldSkillMixin:
         kanae 觉醒技能，保存世界模式 progress 并在下次结算
         直接加减在 progress 最后
         技能存储 base_progress * PROG / 50，下一次消耗全部存储值（无视技能和搭档，但需要非技能隐藏状态）
+        6.0 更新：需要体力消耗才存
         '''
-        self.kanae_stored_progress = self.progress_normalized
-        self.user.current_map.reclimb(self.final_progress)
+        if self.user.current_map.stamina_cost > 0:
+            self.kanae_stored_progress = self.progress_normalized
+            self.user.current_map.reclimb(self.final_progress)
 
     def _skill_eto_hoppe(self) -> None:
         '''
@@ -641,6 +688,67 @@ class WorldSkillMixin:
         if self.user.stamina.stamina >= 6:
             self.character_bonus_progress_normalized = self.progress_normalized
             self.user.current_map.reclimb(self.final_progress)
+
+    def _skill_chinatsu(self) -> None:
+        '''
+        chinatsu 技能，hp 超过时提高搭档能力值  
+        '''
+        _flag = self.user_play.skill_chinatsu_flag
+        if not self.user_play.hp_interval_bonus or not _flag:
+            return
+
+        x = _flag[:min(len(_flag), self.user_play.hp_interval_bonus)]
+        self.over_skill_increase = x.count('2') * 5
+        self.prog_skill_increase = x.count('1') * 5
+
+    def _skill_intruder(self) -> None:
+        '''
+        intruder 技能，夺舍后世界进度翻倍
+        '''
+        if self.user_play.invasion_flag:
+            self.character_bonus_progress_normalized = self.progress_normalized
+            self.user.current_map.reclimb(self.final_progress)
+
+    def _skill_salt(self) -> None:
+        '''
+        salt 技能，根据单个章节地图的完成情况额外获得最高 10 的世界模式进度
+
+        当前章节完成地图数 / 本章节总地图数（不含无限图）* 10
+        '''
+        if Config.CHARACTER_FULL_UNLOCK:
+            self.character_bonus_progress_normalized = 10
+            return
+
+        kvd = UserKVTable(self.c, self.user.user_id, 'world')
+
+        chapter_id = self.user.current_map.chapter
+        count = kvd['chapter_complete_count', chapter_id] or 0
+        total = len(MapParser.chapter_info_without_repeatable[chapter_id])
+        if count > total:
+            count = total
+
+        radio = count / total if total else 1
+
+        self.character_bonus_progress_normalized = 10 * radio
+
+    def _skill_hikari_selene(self) -> None:
+        '''
+        hikari_selene 技能，曲目结算时每满一格收集条增加 2 step 与 2 overdrive
+        '''
+        self.over_skill_increase = 0
+        self.prog_skill_increase = 0
+        if 0 < self.user_play.health <= 100:
+            self.over_skill_increase = int(self.user_play.health / 10) * 2
+            self.prog_skill_increase = int(self.user_play.health / 10) * 2
+
+    def _skill_nami_sui(self) -> None:
+        '''
+        nami & sui 技能，根据纯粹音符数与 FEVER 等级提高世界模式进度
+        '''
+        if self.user_play.fever_bonus is None:
+            return
+
+        self.character_bonus_progress_normalized = self.user_play.fever_bonus / 1000
 
 
 class BaseWorldPlay(WorldSkillMixin):
@@ -690,9 +798,13 @@ class BaseWorldPlay(WorldSkillMixin):
             'world_mode_locked_end_ts': self.user.world_mode_locked_end_ts,
             'beyond_boost_gauge': self.user.beyond_boost_gauge,
             # 'wpaid': 'helloworld',  # world play id ???
-            # progress_before_sub_boost
-            # progress_sub_boost_amount
-            # subscription_multiply
+            'progress_before_sub_boost': self.final_progress,
+            'progress_sub_boost_amount': 0,
+            # 'subscription_multiply'
+
+            # lephon_final: bool  dynamic map info
+            # lephon_active: bool  dynamic map info
+            # 'steps_modified': False,
         }
 
         if self.character_used.skill_id_displayed == 'skill_maya':
@@ -751,6 +863,11 @@ class BaseWorldPlay(WorldSkillMixin):
             if self.user_play.beyond_gauge == 0 and self.user.kanae_stored_prog > 0:
                 # 实在不想拆开了，在这里判断一下，注意这段不会在 BeyondWorldPlay 中执行
                 self.kanae_added_progress = self.user.kanae_stored_prog
+
+            if self.user_play.invasion_flag == 1 or (self.user_play.invasion_flag == 2 and self.user_play.health <= 0):
+                # 这里硬编码了搭档 id 72
+                self.character_used = UserCharacter(self.c, 72, self.user)
+                self.character_used.select_character_info()
         else:
             self.character_used.character_id = self.user.character.character_id
             self.character_used.level.level = self.user.character.level.level
@@ -784,6 +901,9 @@ class BaseWorldPlay(WorldSkillMixin):
             self.user.current_map.curr_position = 0
 
         self.user.current_map.update()
+
+        # 更新用户完成情况
+        self.user.update_user_world_complete_info()
 
     def update(self) -> None:
         '''世界模式更新'''
@@ -932,6 +1052,7 @@ class BeyondWorldPlay(BaseWorldPlay):
             r['char_stats']['over_skill_increase'] = self.over_skill_increase
 
         r["user_map"]["steps"] = len(self.user.current_map.steps_for_climbing)
+
         r['affinity_multiply'] = self.affinity_multiplier
         if self.user_play.beyond_boost_gauge_usage != 0:
             r['beyond_boost_gauge_usage'] = self.user_play.beyond_boost_gauge_usage

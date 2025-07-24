@@ -14,8 +14,11 @@ from .func import arc_try, header_check, success_return
 
 bp = Blueprint('user', __name__, url_prefix='/user')
 
+bp2 = Blueprint('account', __name__, url_prefix='/account')
+
 
 @bp.route('', methods=['POST'])  # 注册接口
+@bp2.route('', methods=['POST'])
 @arc_try
 def register():
     error = header_check(request)
@@ -48,6 +51,16 @@ def register():
 def user_me(user_id):
     with Connect() as c:
         return success_return(UserOnline(c, user_id).to_dict())
+
+
+@bp.route('/me/toggle_invasion', methods=['POST'])  # insight skill
+@auth_required(request)
+@arc_try
+def toggle_invasion(user_id):
+    with Connect() as c:
+        user = UserOnline(c, user_id)
+        user.toggle_invasion()
+        return success_return({'user_id': user.user_id, 'insight_state': user.insight_state})
 
 
 @bp.route('/me/character', methods=['POST'])  # 角色切换
@@ -163,6 +176,7 @@ def sys_set(user_id, set_arg):
 
 
 @bp.route('/me/request_delete', methods=['POST'])  # 删除账号
+@bp2.route('/me/request_delete', methods=['POST'])
 @auth_required(request)
 @arc_try
 def user_delete(user_id):
@@ -173,6 +187,14 @@ def user_delete(user_id):
 
 
 @bp.route('/email/resend_verify', methods=['POST'])  # 邮箱验证重发
+@bp2.route('/email/resend_verify', methods=['POST'])
 @arc_try
 def email_resend_verify():
+    raise ArcError('Email verification unavailable.', 151, status=404)
+
+
+@bp.route('/verify', methods=['POST'])  # 邮箱验证状态查询
+@bp2.route('/verify', methods=['POST'])
+@arc_try
+def email_verify():
     raise ArcError('Email verification unavailable.', 151, status=404)

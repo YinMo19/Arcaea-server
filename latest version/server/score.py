@@ -29,11 +29,12 @@ def score_token_world(user_id):
 
     d = request.args.get
 
-    stamina_multiply = int(d('stamina_multiply', 1))
-    fragment_multiply = int(d('fragment_multiply', 100))
-    prog_boost_multiply = int(d('prog_boost_multiply', 0))
-    beyond_boost_gauge_use = int(d('beyond_boost_gauge_use', 0))
+    stamina_multiply = d('stamina_multiply', 1, type=int)
+    fragment_multiply = d('fragment_multiply', 100, type=int)
+    prog_boost_multiply = d('prog_boost_multiply', 0, type=int)
+    beyond_boost_gauge_use = d('beyond_boost_gauge_use', 0, type=int)
     skill_cytusii_flag = None
+    skill_chinatsu_flag = None
     skill_id = d('skill_id')
 
     if (skill_id == 'skill_ilith_ivy' or skill_id == 'skill_hikari_vanessa') and d('is_skill_sealed') == 'false':
@@ -41,23 +42,34 @@ def score_token_world(user_id):
         # TODO: 需要重构整个 user_play，世界模式 / 课题模式，所以现在临时 work 一下
         skill_cytusii_flag = ''.join([str(randint(0, 2)) for _ in range(5)])
 
+    if skill_id == 'skill_chinatsu' and d('is_skill_sealed') == 'false':
+        skill_chinatsu_flag = ''.join([str(randint(0, 2)) for _ in range(7)])
+
+    skill_flag = skill_cytusii_flag or skill_chinatsu_flag
+
     with Connect() as c:
         x = UserPlay(c, UserOnline(c, user_id))
-        x.song.set_chart(request.args['song_id'], int(
-            request.args['difficulty']))
+        x.song.set_chart(d('song_id'), d('difficulty', type=int))
         x.set_play_state_for_world(
-            stamina_multiply, fragment_multiply, prog_boost_multiply, beyond_boost_gauge_use, skill_cytusii_flag)
+            stamina_multiply, fragment_multiply, prog_boost_multiply, beyond_boost_gauge_use, skill_cytusii_flag, skill_chinatsu_flag)
 
         r = {
             "stamina": x.user.stamina.stamina,
             "max_stamina_ts": x.user.stamina.max_stamina_ts,
             "token": x.song_token,
+            'play_parameters': {},
         }
-        if skill_cytusii_flag and skill_id:
+        if skill_flag and skill_id:
             r['play_parameters'] = {
                 skill_id: list(
-                    map(lambda x: Constant.WORLD_VALUE_NAME_ENUM[int(x)], skill_cytusii_flag))
+                    map(lambda x: Constant.WORLD_VALUE_NAME_ENUM[int(x)], skill_flag)),
             }
+
+        if x.invasion_flag == 1:
+            r['play_parameters']['invasion_start'] = True
+        elif x.invasion_flag == 2:
+            r['play_parameters']['invasion_hard'] = True
+
         return success_return(r)
 
 
@@ -115,11 +127,17 @@ def song_score_post(user_id):
         x.submission_hash = request.form['submission_hash']
         if 'combo_interval_bonus' in request.form:
             x.combo_interval_bonus = int(request.form['combo_interval_bonus'])
+        if 'hp_interval_bonus' in request.form:
+            x.hp_interval_bonus = int(request.form['hp_interval_bonus'])
+        # visible_map_count
+        if 'fever_bonus' in request.form:
+            x.fever_bonus = int(request.form['fever_bonus'])
         x.highest_health = request.form.get("highest_health", type=int)
         x.lowest_health = request.form.get("lowest_health", type=int)
         if not x.is_valid:
             raise InputError('Invalid score.', 107)
         x.upload_score()
+        # room_code???
         return success_return(x.to_dict())
 
 

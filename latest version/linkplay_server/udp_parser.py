@@ -247,6 +247,10 @@ class CommandParser:
                 self.room.make_round()
             logging.info(f'Room `{self.room.room_code}` starts playing')
 
+            for p in self.room.players:
+                # 防止提前结算
+                p.finish_flag = 0
+
         if self.room.state == 4:
             # 这好像会误判
             # if player.download_percent < 99:
