@@ -89,7 +89,7 @@ It is just so interesting. What it can do is under exploration.
 > 其它小改动请参考各个 commit 信息。  
 > Please refer to the commit messages for other minor changes.
 
-### Version 2.12.0
+### Version 2.12.1
 
 > v2.12.0.1 ~ v2.12.0.10 for Arcaea 5.10.6 ~ 6.7.1
 >
